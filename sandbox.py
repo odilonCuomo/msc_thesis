@@ -1,4 +1,5 @@
 import preflibtools
+from mallows import *
 from preflibtools.instances.sampling import *
 from preflibtools.properties.distances import *
 from pdi import *
@@ -12,24 +13,31 @@ def str_order(order):
         res += alt
     return res
 
+def print_profile(p):
+    orders = [str_order(k) for k in list(p.keys())]
+    voters = list(p.values())
+
+    fig = plt.figure(figsize = (15, 5))
+
+    # creating the bar plot
+    plt.bar(orders, voters, color ='maroon',
+            width = 0.4)
+
+    plt.xlabel("Orders")
+    plt.ylabel("No. of voters")
+    plt.title("Preference orders by number of voters")
+    plt.show()
+
+
 num_alternatives = 5
-num_voters = 20
+num_voters = 50
+phi = 0.3
 
 reference_order = tuple((i) for i in range(num_alternatives)) #order expressed as tuple of ints
-profile = generate_mallows(num_voters, num_alternatives, [1], dispersions=[0.6], references=[reference_order])
-orders = [str_order(k) for k in list(profile.keys())]
-voters = list(profile.values())
-
-fig = plt.figure(figsize = (15, 5))
-
-# creating the bar plot
-plt.bar(orders, voters, color ='maroon',
-		width = 0.4)
-
-plt.xlabel("Orders")
-plt.ylabel("No. of voters")
-plt.title("Preference orders by number of voters")
-plt.show()
+profile1 = generate_mallows(num_voters, num_alternatives, [1], dispersions=[phi], references=[reference_order])
+profile2 = Mallows_Proposal_Profile(num_alternatives, num_voters, phi, reference_order)
+print_profile(profile1)
+print_profile(profile2)
 
 
 """ def agg1(pair_list):
@@ -37,43 +45,6 @@ plt.show()
     for (v, count) in pair_list:
         sum += count * v
     return sum """
-""" num_alternatives = 5
-reference_order = tuple((i) for i in range(num_alternatives)) #order expressed as tuple of ints
-profile = generate_mallows(20, num_alternatives, [1], dispersions=[10.], references=[reference_order])
-print(profile)
-
-def str_order(order):
-    order = [str(alt[0]) for alt in order]
-    res = ""
-    for alt in order:
-        res += alt
-    return res
-
-# creating the dataset
-orders = [str_order(k) for k in list(profile.keys())]
-voters = list(profile.values())
-
-fig = plt.figure(figsize = (15, 5))
-
-# creating the bar plot
-plt.bar(orders, voters, color ='maroon',
-		width = 0.4)
-
-plt.xlabel("Orders")
-plt.ylabel("No. of voters")
-plt.title("Preference orders by number of voters")
-plt.show()
-
- """
-""" print(len(d))
-print("support pdi:")
-print(support_pdi(d))
-print("distance pdi:")
-dist_pdi = distance_pdi(d, agg1, kendall_tau_distance)
-
-reference = tuple((i, ) for i in range(3)) #order expressed as tuple of ints
-c_pdi = Compromise_PDI(reference, agg1, kendall_tau_distance)
-c_pdi.of(d) """
 
 """ class Args:
   def __init__(self):
