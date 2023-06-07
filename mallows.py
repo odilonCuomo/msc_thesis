@@ -5,8 +5,6 @@ import numpy as np
 def Mallows_Proposal_Sampler(nb_alternatives, phi, reference):
     ordering = []
     alternatives_left = list(int(a) for a in reference)
-    #indices of elements already seen
-    indices = set()
     basic_distro = [pow(phi, i) for i in range(nb_alternatives)]
 
     for i in range(nb_alternatives):
