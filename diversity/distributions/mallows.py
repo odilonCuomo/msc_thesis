@@ -14,13 +14,12 @@ def Mallows_Proposal_Sampler(nb_alternatives, phi, reference):
         choice = np.random.choice(a=alternatives_left, p=p)
         #delete drawn alt from alt_left, add to final ordering
         alternatives_left.remove(choice)
-        ordering.append((choice, ))
+        ordering.append(choice)
 
     return tuple(ordering)
 
-#mallows proposal sampler - returns a profile
-def Mallows_Proposal_Profile(nb_alternatives, nb_agents, phi, reference):
-    """ Returns the diversity index corresponding to the given profile
+def Mallows_Profile(nb_alternatives, nb_agents, phi, reference):
+    """ Returns a population's preferences distributed according to the Mallows model
         :param nb_alternatives: number of alternatives to totally order 
         :type nb_alternatives: int
         :param nb_agents: number of agents in the profile

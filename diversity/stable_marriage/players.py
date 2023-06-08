@@ -27,7 +27,7 @@ class Player():
         self.id = id
         self.prefs = []
         self.matching = None
-        self.considering = 1
+        self.considering = 0
 
     def set_prefs(self, players_id):
         """Set the player's preferences to be a list of players."""
@@ -52,11 +52,13 @@ class Player():
     
     def get_next_favourite(self):
         """Get the player to propose to"""
-        next_p = self.prefs[self.considering]
-        self.considering += 1
-        if self.considering == len(self.prefers):
-            self.considering = None
-        return next_p
+        if self.considering is not None:
+            next_p = self.prefs[self.considering]
+            self.considering += 1
+            if self.considering == len(self.prefs):
+                self.considering = None
+            return next_p
+        return None
     
     def prefers(self, player_id, other_id):
         """Determines whether the player prefers a player over some other
@@ -64,3 +66,8 @@ class Player():
 
         prefs = self.prefs
         return prefs.index(player_id) < prefs.index(other_id)
+    
+    def get_borda(self):
+        """Returns this players Borda utility (Borda count)
+        Requires this player to be already matched up."""
+        return len(self.prefs) - self.prefs.index(self.matching.id) - 1

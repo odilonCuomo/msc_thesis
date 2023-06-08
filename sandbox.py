@@ -1,8 +1,8 @@
 import preflibtools
-from mallows import *
+from distributions.mallows import *
 from preflibtools.instances.sampling import *
 from preflibtools.properties.distances import *
-from pdi import *
+from diversity.pdi import *
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -29,15 +29,23 @@ def print_profile(p):
     plt.show()
 
 
-num_alternatives = 5
+num_alternatives = 3
 num_voters = 50
 phi = 0.3
 
-reference_order = tuple((i) for i in range(num_alternatives)) #order expressed as tuple of ints
+o = Mallows_Proposal_Sampler(num_alternatives, phi, reference=(1, 2, 3))
+print(o)
+p = Mallows_Profile(num_alternatives, 50, 0.0, (1, 2, 3))
+print(p)
+
+t = tuple(i for i in range(7))
+print(t)
+
+""" reference_order = tuple((i) for i in range(num_alternatives)) #order expressed as tuple of ints
 profile1 = generate_mallows(num_voters, num_alternatives, [1], dispersions=[phi], references=[reference_order])
-profile2 = Mallows_Proposal_Profile(num_alternatives, num_voters, phi, reference_order)
+profile2 = Mallows_Profile(num_alternatives, num_voters, phi, reference_order)
 print_profile(profile1)
-print_profile(profile2)
+print_profile(profile2) """
 
 
 """ def agg1(pair_list):

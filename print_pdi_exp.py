@@ -1,5 +1,5 @@
 from validating_pdi import *
-from pdi import *
+from diversity.pdi import *
 from preflibtools.instances.sampling import *
 
 class Args:

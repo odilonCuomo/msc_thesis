@@ -1,6 +1,6 @@
 import statistics
 from preflibtools.instances.sampling import *
-from pdi import *
+from diversity.pdi import *
 import matplotlib.pyplot as plt
 import csv  
 

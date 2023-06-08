@@ -14,7 +14,7 @@ def _match_pair(player, other):
     other._match(player)
 
 
-def stable_marriage(suitors, reviewers, rev_id_to_idx):
+def gale_shapley(suitors, reviewers, rev_id_to_idx):
     """An extended version of the original Gale-Shapley algorithm which makes
     use of the inherent structures of SM instances. A unique, stable and optimal
     matching is found for any valid set of suitors and reviewers. The optimality
@@ -27,8 +27,7 @@ def stable_marriage(suitors, reviewers, rev_id_to_idx):
         The suitors in the game. Each must rank all of those in ``reviewers``.
     reviewers : list of Player
         The reviewers in the game. Each must rank all of those in ``suitors``.
-    reviewer_id_to_idx : dictionary object where keys are player ids and values are 
-        indices in reviewers list
+    reviewer_id_to_idx : dictionary object where keys are player ids and values are indices in reviewers list
 
     Returns
     -------
@@ -38,6 +37,9 @@ def stable_marriage(suitors, reviewers, rev_id_to_idx):
     """
 
     free_suitors = suitors[:]
+    nb_ditches = 0
+    nb_rebuttals = 0
+    nb_successful = 0
     while free_suitors:
 
         suitor = free_suitors[-1]
@@ -52,10 +54,16 @@ def stable_marriage(suitors, reviewers, rev_id_to_idx):
                 free_suitors.pop() #remove the current suitor from the list of free ones
                 free_suitors.append(current_match)
                 _match_pair(suitor, reviewer)
-            #else: keep existing match, don't drop suitor to free suitor list
+                nb_ditches += 1
+                #print("reviewer " + str(reviewer.id) + " ditched suitor " + str(current_match.id) + " for suitor " + str(suitor.id))
+            else: # keep existing match
+                nb_rebuttals += 1
+                #print("suitor " + str(suitor.id) + " got rebutted by reviewer " + str(reviewer.id))
         else:
             #just match them up
             _match_pair(suitor, reviewer) 
             free_suitors.pop()
+            nb_successful += 1
+            #print("suitor " + str(suitor.id) + " matched with reviewer " + str(reviewer.id))
 
-    return {s: s.matching for s in suitors}
+    return {s: s.matching for s in suitors}, (nb_ditches, nb_rebuttals, nb_successful)
