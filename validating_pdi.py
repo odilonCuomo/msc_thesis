@@ -1,7 +1,6 @@
 import statistics
 from preflibtools.instances.sampling import *
 from diversity.pdi import *
-import matplotlib.pyplot as plt
 import csv  
 
 def pdi_on_mallows(num_voters, num_alternatives, pdi, dispersion_range, n_runs):
@@ -36,7 +35,7 @@ def pdi_on_mallows(num_voters, num_alternatives, pdi, dispersion_range, n_runs):
         res[dispersion] = (mean, variance)
     return res
             
-def graph_vals(dispersion_stats, save_name):
+def graph_vals(dispersion_stats, save_name, x_label, y_label):
     """ graphs out the mean and variance of pdi results over different dispersion values.
             Saves the graph and stats to a given output path.
         :param dispersion_stats: dictionary mapping dispersions to statistics
@@ -48,8 +47,8 @@ def graph_vals(dispersion_stats, save_name):
 
     fig = plt.figure(figsize = (15, 5))
     plt.errorbar(dispersions, means, stddev, linestyle='None', marker='^', capsize=3)
-    plt.xlabel("Dispersion parameter")
-    plt.ylabel("Diversity level")
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
     plt.title(save_name)
 
     plt.savefig('results/' + save_name + ".png")

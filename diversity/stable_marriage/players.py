@@ -34,6 +34,9 @@ class Player():
 
         self.prefs = players_id
 
+    def reset(self):
+        self.considering = 0
+        self.matching = None
 
     def _match(self, other):
         """Assign the player to be matched to some other player."""
