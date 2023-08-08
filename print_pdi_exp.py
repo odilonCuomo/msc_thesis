@@ -4,10 +4,11 @@ from preflibtools.instances.sampling import *
 
 class Args:
   def __init__(self):
-      self.num_voters = 50
-      self.alternatives = 50
-      self.num_runs = 25
-      self.dispersion_range = [p * 0.05 for p in range(21)]
+      self.num_voters = 250
+      self.alternatives = 10
+      self.num_runs = 250
+      ticks = 25
+      self.dispersion_range = [i / ticks for i in range(ticks + 1)]
       self.index = Support_PDI()
 
 def get_path_name(path, args):
@@ -24,7 +25,7 @@ def get_path_name(path, args):
 def run(args, path):
     stats = pdi_on_mallows(args.num_voters, args.alternatives, args.index, args.dispersion_range, args.num_runs)
     full_path = get_path_name(path, args)
-    graph_vals(stats, full_path)
+    graph_vals(stats, full_path, "phi", "PDI")
 
 def sum_aggregator(pair_list):
     sum = 0
@@ -33,7 +34,7 @@ def sum_aggregator(pair_list):
     return sum
 
 def all_three():
-    base_folder = "validate_pdi/zero_one/"
+    base_folder = "validate_pdi/zero_one_reruns/"
     #SUPPORT
     args = Args()
     run(args, base_folder)
@@ -59,4 +60,4 @@ def top_k(choice):
         run(args, base_folder)
 
 
-top_k("distance")
+all_three()

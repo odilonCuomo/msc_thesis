@@ -1,7 +1,8 @@
 import statistics
 from preflibtools.instances.sampling import *
 from diversity.pdi import *
-import csv  
+import csv
+import matplotlib.pyplot as plt
 
 def pdi_on_mallows(num_voters, num_alternatives, pdi, dispersion_range, n_runs):
     """ return a dictionary of the mean+variance of pdis for each dispersion. All runs will use the same parameters, only the dispersion will vary
