@@ -18,6 +18,8 @@ def rand_pick(n, nb_runs, nb_epochs):
     Compare men's happiness within each epoch.
     """
     nb_props = []
+    suitor_borda_diff = []
+    reviewer_borda_diff = []
     for _ in range(nb_epochs):
         #create players
         ref_sui = tuple(sorted([i for i in range(n)], key=lambda k: random.random()))
@@ -29,10 +31,14 @@ def rand_pick(n, nb_runs, nb_epochs):
             rev_dict[p.id] = i
         
         runs = []
+        suitor_bordas = []
+        reviewer_bordas = []
         for _ in range(nb_runs):
             #run GS 
-            props, _, _ = gs_utils.run_gs(suitors, reviewers, rev_dict)
+            props, s_borda, r_borda = gs_utils.run_gs(suitors, reviewers, rev_dict)
             runs.append(sum(props))
+            suitor_bordas.append(sum(s_borda))
+            reviewer_bordas.append(sum(r_borda))
             gs_utils.reset_players(suitors)
             gs_utils.reset_players(reviewers)
 
@@ -40,7 +46,12 @@ def rand_pick(n, nb_runs, nb_epochs):
             random.shuffle(suitors)
         
         nb_props.append(max(runs) - min(runs))
+        suitor_borda_diff.append(max(suitor_bordas) - min(suitor_bordas))
+        reviewer_borda_diff.append(max(reviewer_bordas) - min(reviewer_bordas))
 
-    return nb_props
+    return nb_props, suitor_borda_diff, reviewer_borda_diff
 
-print(max(rand_pick(15, 10000, 1000)))
+res_prop, sui_res, rev_res = rand_pick(15, 1000, 1000)
+print(max(res_prop))
+print(max(sui_res))
+print(max(rev_res))

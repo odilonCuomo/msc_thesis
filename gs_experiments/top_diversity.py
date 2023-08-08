@@ -20,49 +20,13 @@ compute dict(j -> mean, stdev differences)
 graph and save
 """
 
-def permute_window(profile, i, j):
-    """Given a preference profile and two indices i and j, randomly permute the elements between i and j (included) of all players in the profile.
-        
-        Parameters
-        ----------
-        profile : list of Player
-        k : int
-
-        Returns
-        -------
-        profile : list of Player
-            The original profile with the window permuted randomly.
-    """
-    for p in profile:
-        prefs = list(p.prefs)
-        window = prefs[i:j + 1]
-        random.shuffle(window)
-        prefs[i:j + 1] = window
-        p.prefs = tuple(prefs)
-    return profile
-
-def permute_top_k(profile, k):
-    """Given a preference profile and a length k, randomly permute the first k elements of each ordering.
-        
-        Parameters
-        ----------
-        profile : list of Player
-        k : int
-
-        Returns
-        -------
-        profile : list of Player
-            The original profile with prefixes permuted randomly.
-    """
-    return permute_window(profile, 0, k)
-
 def prefix_effect():
     args = Args()
-    args.n = 25
+    args.n = 15
     args.num_runs = 500
     args.noisy_side = "reviewers"
     args.base_phi_sui = 0.5
-    args.base_phi_rev = 0.25
+    args.base_phi_rev = 0.
     stats = dict()
 
     assert(args.noisy_side.lower() in {"suitors", "reviewers"})

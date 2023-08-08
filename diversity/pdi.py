@@ -55,6 +55,12 @@ class Top_K_Support_PDI(PDI):
     
     def __str__(self) -> str:
         return "top_k_support_pdi"
+    
+def sum_aggregator(pair_list):
+    sum = 0
+    for (v, count) in pair_list:
+        sum += count * v
+    return sum
 
 class Distance_PDI(PDI):
     def __init__(self, aggregate, dist_fct) -> None:

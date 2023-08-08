@@ -17,7 +17,7 @@ def swap_window(players, locality, window_len, swap_prob):
     """
     Returns a list of players with a modified preference profile.
     Every player's choice in the given window will be randomly swapped
-    with a element from outisde the window , w.p. swap_prob.
+    with a element from outside the window , w.p. swap_prob.
     """
     assert(locality.lower() in {"top", "bottom"})
     #swap out
@@ -138,7 +138,7 @@ def symmetric_swap_stats_vary_swap_prob(n, num_runs, window_l, window_side, othe
 
 if __name__ == "__main__":
     args = Args()
-    args.n = 25
+    args.n = 100
     args.window_side = "reviewers"
     window_lengths = list(range(2, int(args.n / 2)))
     args.num_runs = 150

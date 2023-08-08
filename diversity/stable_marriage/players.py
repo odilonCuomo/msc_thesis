@@ -1,4 +1,4 @@
-"""Player class for use in the GS algorithm. Mainly inspired from the Matching library (https://github.com/daffidwilde/matching) """
+"""Player class for use in the GS algorithm. Mainly inspired by the Matching library (https://github.com/daffidwilde/matching) """
 
 class Player():
     """A class to represent a player within the matching game.
@@ -74,3 +74,7 @@ class Player():
         """Returns this players Borda utility (Borda count)
         Requires this player to be already matched up."""
         return len(self.prefs) - self.prefs.index(self.matching.id) - 1
+    
+    def get_rank_of(self, player_id):
+        """Returns the rank of the given player id in this player's preference list."""
+        return self.prefs.index(player_id)

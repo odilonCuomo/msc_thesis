@@ -43,8 +43,8 @@ def asymmetry_prop_borda(n, nb_runs, dispersion_range, noiseless_phi, noisy_side
 
             props, b_suitors, b_reviewers = gs_utils.run_gs(suitors, reviewers, rev_dict)
             nb_props.append(sum(props))
-            b_sui.append(sum(b_suitors))
-            b_rev.append((sum(b_reviewers)))
+            b_sui.append(mean(b_suitors))
+            b_rev.append((mean(b_reviewers)))
         stats[phi] = (mean(nb_props), stdev(nb_props))
         borda_stats_sui[phi] = (mean(b_sui), stdev(b_sui))
         borda_stats_rev[phi] = (mean(b_rev), stdev(b_rev))
@@ -58,9 +58,9 @@ if __name__ == "__main__":
     tick_range = range(args.ticks + 1)
     dispersion_range = [i / args.ticks for i in tick_range]
     args.num_runs = 1000
-    args.noiseless_phi = 0.5
+    args.noiseless_phi = 0.75
     args.borda = True
-    path = "results/asymmetry/borda/reviewers"
+    path = "results/asymmetry/borda/suitors"
 
     stats, borda_stats_sui, borda_stats_rev = asymmetry_prop_borda(args.n, args.num_runs, dispersion_range, args.noiseless_phi, noisy_side=args.noisy_side, borda=args.borda)
 
@@ -72,4 +72,4 @@ if __name__ == "__main__":
     if not args.borda:
         graph_mean_stdev(stats, file_name, file_path, "phi", "E[T_n]")
     else:
-        graph_mean_stdev_multiple([borda_stats_sui, borda_stats_rev], file_name + "_borda_scores", file_path, "phi", "Sum of Borda scores", ["suitors borda", 'reviewers borda'])
+        graph_mean_stdev_multiple([borda_stats_sui, borda_stats_rev], file_name + "_borda_scores", file_path, "phi", "Mean of Borda scores", ["suitors borda", 'reviewers borda'])
