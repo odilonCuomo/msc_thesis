@@ -2,6 +2,33 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 
+def graph_grid(grid_stats, save_name, save_path, x_label, y_label):
+    """
+    """
+    dispersions = list(grid_stats.keys())
+    vals = list(grid_stats.values())
+
+    fig = plt.figure(figsize = (10, 5))
+    plt.plot(dispersions, vals)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(save_name)
+
+    plt.savefig(save_path + ".png")
+    plt.show()
+
+    header = [x_label, y_label]
+    data = [[disp, v] for (disp, v) in list(grid_stats.items())]
+
+    with open(save_path + '.csv', 'w', encoding='UTF8', newline='') as f:
+        writer = csv.writer(f)
+
+        # write the header
+        writer.writerow(header)
+
+        # write multiple rows
+        writer.writerows(data)
+
 def graph_mean_stdev(dispersion_stats, save_name, save_path, x_label, y_label):
     """ graphs out the mean and variance of pdi results over different dispersion values.
             Saves the graph and stats to a given output path.
