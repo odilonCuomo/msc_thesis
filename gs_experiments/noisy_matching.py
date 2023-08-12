@@ -1,10 +1,12 @@
 import copy, os, sys, random
+from enum import Enum
 cwd = os.getcwd()
 sys.path.append(cwd)
 import gs_utils, noise_utils
+import numpy as np
 from utils.args import Args, get_path_name
 from statistics import mean, stdev
-from utils.graph_vals import graph_mean_stdev_multiple, graph_min_max_multiple
+from utils.graph_vals import graph_mean_stdev_multiple, graph_min_max_multiple, graph_two_series
 """
 Goal:
 
@@ -24,6 +26,10 @@ Metrics: getting higher aggregated utility in the noisy scenario is interpreted 
 Independent variables: the spread in initial population
 """
 
+class Metric(Enum):
+    STD = 1
+    MAX = 2
+    CORRELATION = 3
 
 def noise_comparison(args, base_phi_sui, base_phi_rev):
     assert(args.noisy_side in {"suitors", "reviewers"})
@@ -59,22 +65,25 @@ def noise_comparison(args, base_phi_sui, base_phi_rev):
 
     return init_borda_sui, init_borda_rev, true_noisy_borda_sui, true_noisy_borda_rev
 
-def noise_run(std_or_max):
-    assert(std_or_max in {"std", "max"})
+def noise_run(metric):
+    assert(metric in [m.name for m in Metric])
     args = Args()
-    args.n = 15
-    args.noisy_side = "reviewers"
+    args.n = 5
+    args.noisy_side = "suitors"
     #for one given profile of men & women, we want to repeat the experiment of adding noise
     #we also want to run this for many different profiles
     #for now: just one run per initial profile
-    args.num_runs = 500
-    phis = [i / 4 for i in range(5)]
-    path = "results/noise/maxes/reviewers"
+    args.num_runs = 50
+    ticks = 10
+    phis = [(i + 1) / ticks for i in range(ticks)]
+    path = "results/noise/correlation/"
+    path = os.path.join(path, args.noisy_side)
 
     file_name = get_path_name(args)
     file_path = os.path.join(path, file_name)
 
     #run
+    correlation_dict = dict()
     for phi_sui in phis:
         phi_to_diffs_sui = dict()
         phi_to_diffs_rev = dict()
@@ -87,21 +96,23 @@ def noise_run(std_or_max):
                 mean_borda_diff_rev.append(mean(noisy_rev) - mean(init_rev))
 
             #plot results
-            """ print("sui: " + str(phi_sui))
-            print("rev: " + str(phi_rev))
-            print(mean(mean_borda_diff_sui))
-            print(mean(mean_borda_diff_rev)) """
-
-            if std_or_max == "std":
+            if metric == Metric.STD.name:
                 phi_to_diffs_sui[phi_rev] = (mean(mean_borda_diff_sui), stdev(mean_borda_diff_sui))
                 phi_to_diffs_rev[phi_rev] = (mean(mean_borda_diff_rev), stdev(mean_borda_diff_rev))
-            else:
+            elif metric == Metric.MAX.name:
                 phi_to_diffs_sui[phi_rev] = (mean(mean_borda_diff_sui), max(mean_borda_diff_sui), min(mean_borda_diff_sui))
                 phi_to_diffs_rev[phi_rev] = (mean(mean_borda_diff_rev), max(mean_borda_diff_rev), min(mean_borda_diff_rev))
+            else:
+                corr_coef = np.corrcoef(mean_borda_diff_sui, mean_borda_diff_rev)
+                correlation_dict[(phi_sui, phi_rev)] = corr_coef[0][1] #get correct element from correlation matrix
+        temp_file_name = file_name + "_phi_sui_" + str(phi_sui)
+        temp_file_path = file_path + "_phi_sui_" + str(phi_sui)
+        if metric == Metric.STD.name:
+            graph_mean_stdev_multiple([phi_to_diffs_sui, phi_to_diffs_rev], temp_file_name, temp_file_path, "phi rev", "Mean of Borda score diff", ["suitors", 'reviewers'])
+        elif metric == Metric.MAX.name:
+            graph_min_max_multiple([phi_to_diffs_sui, phi_to_diffs_rev], temp_file_name, temp_file_path, "phi rev", "Mean of Borda score diff", ["suitors", 'reviewers'])
+    if metric == Metric.CORRELATION.name:
+        graph_two_series(correlation_dict, temp_file_name, temp_file_path, "phi_rev", "correlation in suitor/reviewer utility diff")
+            
 
-        if std_or_max == "std":
-            graph_mean_stdev_multiple([phi_to_diffs_sui, phi_to_diffs_rev], file_name + "_phi_sui_" + str(phi_sui), file_path + "_phi_sui_" + str(phi_sui), "phi rev", "Mean of Borda score diff", ["suitors", 'reviewers'])
-        else:
-            graph_min_max_multiple([phi_to_diffs_sui, phi_to_diffs_rev], file_name + "_phi_sui_" + str(phi_sui), file_path + "_phi_sui_" + str(phi_sui), "phi rev", "Mean of Borda score diff", ["suitors", 'reviewers'])
-
-noise_run("max")
+noise_run(Metric.CORRELATION.name)
