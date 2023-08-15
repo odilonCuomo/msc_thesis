@@ -1,21 +1,79 @@
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+from matplotlib.ticker import FormatStrFormatter
 
-def graph_grid(grid_stats, save_name, save_path, x_label, y_label):
+def graph_grid(grid_stats, title, save_path, min_max, x_label, y_label):
     """
+    Creates a matrix plot of the given grid of values. Will colormap each cell in the matrix on a scale 
+    defined by min_max = (min, max)
+    """
+    #create map: [0,1] -> RGB
+    #viridis = mpl.colormaps['viridis'].resampled(nb_cells)
+
+    dispersions = list(grid_stats.keys())
+    x, y = zip(*dispersions)
+    x, y = list(set(x)), list(set(y))
+    x.sort()
+    y.sort()
+    nb_cells = len(x)
+    xy_vals = [[grid_stats[(i, j)] for j in y] for i in x]
+    fig, ax = plt.subplots()
+    fig.set_size_inches(15, 10)
+    if min_max is not None: 
+        min_val, max_val = min_max
+        mat = ax.matshow(xy_vals, cmap=plt.cm.Blues, vmin=min_val, vmax=max_val)
+    else:
+        mat = ax.matshow(xy_vals, cmap=plt.cm.Blues)
+
+    for i in range(nb_cells):
+        for j in range(nb_cells):
+            c = xy_vals[j][i]
+            ax.text(i, j, str(round(c, 2)), va='center', ha='center')
+
+    plt.xticks(range(nb_cells), [f"{i:.2f}" for i in x])
+    plt.yticks(range(nb_cells), [f"{i:.2f}" for i in y])
+    #ax.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
+    # Set ticks on both sides of axes on
+    ax.tick_params(axis="x", bottom=True, top=False, labelbottom=True, labeltop=False)
+    plt.colorbar(mat, ax=ax)
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    
+    plt.savefig(save_path + ".png")
+    
+    #save to .csv
+    header = [x_label, y_label]
+    data = [[disp, v] for (disp, v) in list(grid_stats.items())]
+
+    with open(save_path + '.csv', 'w', encoding='UTF8', newline='') as f:
+        writer = csv.writer(f)
+
+        # write the header
+        writer.writerow(header)
+
+        # write multiple rows
+        writer.writerows(data)
+
+def graph_plt_plot(grid_stats, save_name, save_path, x_label, y_label):
+    """
+    graphs out the given stats as a simple 2D plot. Saves the graph and stats to a given output path.
+        :param grid_stats: dictionary mapping x to y
+        :type grid_stats: dict
     """
     dispersions = list(grid_stats.keys())
     vals = list(grid_stats.values())
 
-    fig = plt.figure(figsize = (10, 5))
+    fig = plt.figure(figsize = (40, 20))
     plt.plot(dispersions, vals)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     plt.title(save_name)
 
     plt.savefig(save_path + ".png")
-    plt.show()
 
     header = [x_label, y_label]
     data = [[disp, v] for (disp, v) in list(grid_stats.items())]

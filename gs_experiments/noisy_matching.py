@@ -1,12 +1,14 @@
-import copy, os, sys, random
-from enum import Enum
+import copy, os, sys, random, json, git
 cwd = os.getcwd()
 sys.path.append(cwd)
 import gs_utils, noise_utils
-import numpy as np
 from utils.args import Args, get_path_name
+from utils.graph_vals import *
+
+from enum import Enum
+import numpy as np
 from statistics import mean, stdev
-from utils.graph_vals import graph_mean_stdev_multiple, graph_min_max_multiple, graph_two_series
+from datetime import datetime
 """
 Goal:
 
@@ -30,6 +32,7 @@ class Metric(Enum):
     STD = 1
     MAX = 2
     CORRELATION = 3
+    GRID_MEAN = 4
 
 def noise_comparison(args, base_phi_sui, base_phi_rev):
     assert(args.noisy_side in {"suitors", "reviewers"})
@@ -68,23 +71,41 @@ def noise_comparison(args, base_phi_sui, base_phi_rev):
 def noise_run(metric):
     assert(metric in [m.name for m in Metric])
     args = Args()
-    args.n = 5
-    args.noisy_side = "suitors"
+    args.n = 15
+    args.noisy_side = "reviewers"
     #for one given profile of men & women, we want to repeat the experiment of adding noise
     #we also want to run this for many different profiles
     #for now: just one run per initial profile
-    args.num_runs = 50
-    ticks = 10
+    args.num_runs = 500
+    ticks = 20
     phis = [(i + 1) / ticks for i in range(ticks)]
-    path = "results/noise/correlation/"
+    path = "results/noise/"
+    path = os.path.join(path, metric.lower())
     path = os.path.join(path, args.noisy_side)
+
+    #create directory for this run
+    path = os.path.join(path, str(datetime.now()))
+    os.makedirs(path)
+
+    #record arguments in directory as .json
+    repo = git.Repo(search_parent_directories=True)
+    sha = repo.head.object.hexsha
+    dictionary = {"commit_id" : sha}
+    for key in vars(args):
+        dictionary[str(key)] = getattr(args, key)
+
+    with open(os.path.join(path, "args.json"), "w") as outfile:
+        json.dump(dictionary, outfile, indent=4, sort_keys=True, default=lambda x: x.__name__)
 
     file_name = get_path_name(args)
     file_path = os.path.join(path, file_name)
 
     #run
     correlation_dict = dict()
+    mean_dict_sui = dict()
+    mean_dict_rev = dict()
     for phi_sui in phis:
+        temp_correlation_dict = dict()
         phi_to_diffs_sui = dict()
         phi_to_diffs_rev = dict()
         for phi_rev in phis:
@@ -102,17 +123,26 @@ def noise_run(metric):
             elif metric == Metric.MAX.name:
                 phi_to_diffs_sui[phi_rev] = (mean(mean_borda_diff_sui), max(mean_borda_diff_sui), min(mean_borda_diff_sui))
                 phi_to_diffs_rev[phi_rev] = (mean(mean_borda_diff_rev), max(mean_borda_diff_rev), min(mean_borda_diff_rev))
-            else:
+            elif metric == Metric.CORRELATION.name:
                 corr_coef = np.corrcoef(mean_borda_diff_sui, mean_borda_diff_rev)
-                correlation_dict[(phi_sui, phi_rev)] = corr_coef[0][1] #get correct element from correlation matrix
+                correlation_dict[(phi_sui, phi_rev)] = corr_coef[0][1] #get correct element from Pearson correlation matrix
+                temp_correlation_dict[phi_rev] = corr_coef[0][1]
+            else: #grid mean
+                mean_dict_sui[(phi_sui, phi_rev)] = mean(mean_borda_diff_sui)
+                mean_dict_rev[(phi_sui, phi_rev)] = mean(mean_borda_diff_rev)
         temp_file_name = file_name + "_phi_sui_" + str(phi_sui)
         temp_file_path = file_path + "_phi_sui_" + str(phi_sui)
         if metric == Metric.STD.name:
             graph_mean_stdev_multiple([phi_to_diffs_sui, phi_to_diffs_rev], temp_file_name, temp_file_path, "phi rev", "Mean of Borda score diff", ["suitors", 'reviewers'])
         elif metric == Metric.MAX.name:
             graph_min_max_multiple([phi_to_diffs_sui, phi_to_diffs_rev], temp_file_name, temp_file_path, "phi rev", "Mean of Borda score diff", ["suitors", 'reviewers'])
+    #if we're recording correlation, plot a grid of the correlations for each (phi_sui, phi_rev) pair
     if metric == Metric.CORRELATION.name:
-        graph_two_series(correlation_dict, temp_file_name, temp_file_path, "phi_rev", "correlation in suitor/reviewer utility diff")
+        graph_grid(correlation_dict, "Correlation between suitor and reviewer differences in utility", os.path.join(path, "correlation_matrix"), (-1, 1), "phi_sui", "phi_rev")
+    elif metric == Metric.GRID_MEAN.name:
+        graph_grid(mean_dict_sui, "Mean of differences in suitor Borda scores", os.path.join(path, "mean_matrix_suitors"), (-1, 1), "phi_sui", "phi_rev")
+        graph_grid(mean_dict_rev, "Mean of differences in reviewer Borda scores", os.path.join(path, "mean_matrix_reviewers"), (-1, 1), "phi_sui", "phi_rev")
+
             
 
-noise_run(Metric.CORRELATION.name)
+noise_run(Metric.GRID_MEAN.name)

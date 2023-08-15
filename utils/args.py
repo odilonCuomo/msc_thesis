@@ -1,6 +1,6 @@
 class Args:
   def __init__(self):
-      self.num_runs = 25
+    pass
 
 def get_path_name(args):
     path = ""
