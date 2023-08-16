@@ -1,16 +1,14 @@
-import random
-from statistics import mean, stdev
-import os
-import sys
+import random, os, sys, git, json
 cwd = os.getcwd()
 sys.path.append(cwd)
+import gs_utils
 from diversity.stable_marriage import gale_shapley, players, borda_vals
 from diversity.distributions import mallows
+from utils.args import Args, get_path_name
 from utils.graph_vals import graph_mean_stdev, graph_mean_stdev_multiple
-from utils.args import Args
-import utils.args
-import argparse
-import gs_utils
+
+from statistics import mean, stdev
+from datetime import datetime
 
 def asymmetry_prop_borda(n, nb_runs, dispersion_range, noiseless_phi, noisy_side="suitors", borda=False):
     """
@@ -52,21 +50,36 @@ def asymmetry_prop_borda(n, nb_runs, dispersion_range, noiseless_phi, noisy_side
 
 if __name__ == "__main__":
     args = Args()
-    args.n = 15
-    args.ticks = 20
+    args.n = 500
+    ticks = 21
     args.noisy_side = "reviewers"
-    tick_range = range(args.ticks + 1)
-    dispersion_range = [i / args.ticks for i in tick_range]
-    args.num_runs = 1000
+    tick_range = range(ticks + 1)
+    dispersion_range = [i / ticks for i in tick_range]
+    args.num_runs = 150
     args.noiseless_phi = 0.75
     args.borda = True
-    path = "results/asymmetry/borda/suitors"
+    path = "results/asymmetry/borda/"
+
+    #create directory for this run
+    path = os.path.join(path, args.noisy_side)
+    path = os.path.join(path, str(datetime.now()))
+    os.makedirs(path)
+
+    #record arguments in directory as .json
+    repo = git.Repo(search_parent_directories=True)
+    sha = repo.head.object.hexsha
+    dictionary = {"commit_id" : sha}
+    for key in vars(args):
+        dictionary[str(key)] = getattr(args, key)
+
+    with open(os.path.join(path, "args.json"), "w") as outfile:
+        json.dump(dictionary, outfile, indent=4, sort_keys=True, default=lambda x: x.__name__)
 
     stats, borda_stats_sui, borda_stats_rev = asymmetry_prop_borda(args.n, args.num_runs, dispersion_range, args.noiseless_phi, noisy_side=args.noisy_side, borda=args.borda)
 
     if not os.path.isdir(path):
         os.mkdir(path)
-    file_name = utils.args.get_path_name(args)
+    file_name = get_path_name(args)
     file_path = os.path.join(path, file_name)
 
     if not args.borda:

@@ -72,7 +72,7 @@ def noise_run(metric):
     assert(metric in [m.name for m in Metric])
     args = Args()
     args.n = 15
-    args.noisy_side = "reviewers"
+    args.noisy_side = "suitors"
     #for one given profile of men & women, we want to repeat the experiment of adding noise
     #we also want to run this for many different profiles
     #for now: just one run per initial profile
