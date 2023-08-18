@@ -57,6 +57,10 @@ def mallows_DA_grid(n, nb_runs, dispersion_range, mode="mean"):
     borda_stats_sui = dict()
     borda_stats_rev = dict()
 
+    #count variable to display progress bar
+    count = 0
+    max_count = pow(len(dispersion_range), 2)
+
     for phi_rev in dispersion_range:
         for phi_sui in dispersion_range:
             nb_props = []
@@ -79,16 +83,20 @@ def mallows_DA_grid(n, nb_runs, dispersion_range, mode="mean"):
             stats[(phi_sui, phi_rev)] = mean(nb_props) if mode == "mean" else stdev(nb_props)
             borda_stats_sui[(phi_sui, phi_rev)] = mean(b_sui) if mode == "mean" else stdev(b_sui)
             borda_stats_rev[(phi_sui, phi_rev)] = mean(b_rev) if mode == "mean" else stdev(b_rev)
+
+            count += 1
+            print(str(count / max_count * 100) + "%")
+
     return stats, borda_stats_sui, borda_stats_rev
 
 
 if __name__ == "__main__":
     args = Args()
-    args.n = 50
-    ticks = 21
+    args.n = 1000
+    ticks = 6
     tick_range = range(ticks + 1)
     dispersion_range = [i / ticks for i in tick_range]
-    args.num_runs = 250
+    args.num_runs = 100
     args.borda = True
     args.grid = True
     path = "results/asymmetry/borda/"

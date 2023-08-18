@@ -35,7 +35,7 @@ class Metric(Enum):
     GRID_MEAN = 4
 
 def noise_comparison(args, base_phi_sui, base_phi_rev):
-    assert(args.noisy_side in {"suitors", "reviewers"})
+    assert(args.noisy_side in {"suitors", "reviewers", "both"})
     #create profiles
     ref_sui = tuple(sorted([i for i in range(args.n)], key=lambda k: random.random()))
     ref_rev = tuple(sorted([i for i in range(args.n)], key=lambda k: random.random()))
@@ -47,12 +47,15 @@ def noise_comparison(args, base_phi_sui, base_phi_rev):
 
     #add noise
     if args.noisy_side == "suitors":
-        noisy_suitors = noise_utils.add_noise_slide(suitors, 0, 3, 1)
+        noisy_suitors = noise_utils.add_noise_slide(suitors, 0, 3, 1, window_start_min=0)
         noisy_reviewers = copy.deepcopy(reviewers)
-    else:
+    elif args.noisy_side == "reviewers":
         noisy_suitors = copy.deepcopy(suitors)
-        noisy_reviewers = noise_utils.add_noise_slide(reviewers, 0, 3, 1)
-
+        #start at 1 given theorem 5 in Ms Machiavelli paper (not first choice in pref list => strictly dominated)
+        noisy_reviewers = noise_utils.add_noise_slide(reviewers, 0, 3, 1, window_start_min=1)
+    else: #add noise to both
+        noisy_suitors = noise_utils.add_noise_slide(suitors, 0, 3, 1, window_start_min=0)
+        noisy_reviewers = noise_utils.add_noise_slide(reviewers, 0, 3, 1, window_start_min=1)
 
     #run GS on initial profiles
     _, init_borda_sui, init_borda_rev = gs_utils.run_gs(suitors, reviewers, rev_dict)

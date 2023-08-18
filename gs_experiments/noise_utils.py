@@ -17,10 +17,22 @@ def add_noise_profile(profile, overlap=0, window_length=3, permute_prob=1.):
                 noisy_profile[k] = pref_list
     return noisy_profile
 
-def add_noise_slide(players, overlap=0, window_length=3, permute_prob=1.):
+def add_noise_slide(players, overlap=0, window_length=3, permute_prob=1., window_start_min=0):
     """
     creates a new list of players with noise added to the preferences of the input list
     noise is added by sliding a window on each player's preference list and performing a permutation
+        :param players: list of players
+        :type players: List[Player]
+        :param overap: size of the overlap between each adjancent sliding window
+        :type overlap: int
+        :param window_length: says on the tin
+        :type window_length: int
+        :param permute_prob: probability for each window's content to be permuted.
+        :type permute_prob: float
+        :param window_start_min: where to start the window sliding. If 0 starts at the top of the preference list.
+        :type window_start_min: int
+        :return: a list of players with the described noise added to their preference lists
+        :rtype: List[Player]
     """
     pref_length = len(players[0].prefs)
     assert(overlap >= 0 and overlap < window_length)
@@ -28,7 +40,7 @@ def add_noise_slide(players, overlap=0, window_length=3, permute_prob=1.):
     noisy_players = copy.deepcopy(players)
     for p in noisy_players:
         #define the window:
-        for start in range(0, pref_length - window_length + 1, window_length - overlap):
+        for start in range(window_start_min, pref_length - window_length + 1, window_length - overlap):
             #determine if we swap or not
             if random.uniform(0, 1) < permute_prob:
                 #permute the given window
