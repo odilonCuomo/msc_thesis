@@ -1,4 +1,4 @@
-import random, os, sys, git, json
+import random, os, sys, git, json, argparse
 cwd = os.getcwd()
 sys.path.append(cwd)
 import gs_utils
@@ -56,6 +56,7 @@ def mallows_DA_grid(n, nb_runs, dispersion_range, mode="mean"):
     stats = dict()
     borda_stats_sui = dict()
     borda_stats_rev = dict()
+    se_cost_dict = dict()
 
     #count variable to display progress bar
     count = 0
@@ -66,6 +67,7 @@ def mallows_DA_grid(n, nb_runs, dispersion_range, mode="mean"):
             nb_props = []
             b_sui = []
             b_rev = []
+            se_costs = []
             for _ in range(nb_runs):
                 #create players
                 ref_sui = tuple(sorted([i for i in range(n)], key=lambda k: random.random()))
@@ -77,32 +79,28 @@ def mallows_DA_grid(n, nb_runs, dispersion_range, mode="mean"):
                     rev_dict[p.id] = i
 
                 props, b_suitors, b_reviewers = gs_utils.run_gs(suitors, reviewers, rev_dict)
+                mean_borda_suitors, mean_borda_reviewers = mean(b_suitors), mean(b_reviewers)
                 nb_props.append(sum(props))
-                b_sui.append(mean(b_suitors))
-                b_rev.append((mean(b_reviewers)))
+                b_sui.append(mean_borda_suitors)
+                b_rev.append(mean_borda_reviewers)
+                se_costs.append(abs(mean_borda_suitors - mean_borda_reviewers))
             stats[(phi_sui, phi_rev)] = mean(nb_props) if mode == "mean" else stdev(nb_props)
             borda_stats_sui[(phi_sui, phi_rev)] = mean(b_sui) if mode == "mean" else stdev(b_sui)
             borda_stats_rev[(phi_sui, phi_rev)] = mean(b_rev) if mode == "mean" else stdev(b_rev)
+            se_cost_dict[(phi_sui, phi_rev)] = mean(se_costs) if mode == "mean" else stdev(se_costs)
 
             count += 1
-            print(str(count / max_count * 100) + "%")
+            print(str(count / max_count * 100) + "%" + str(datetime.now()))
 
-    return stats, borda_stats_sui, borda_stats_rev
+    return stats, borda_stats_sui, borda_stats_rev, se_cost_dict
 
-
-if __name__ == "__main__":
-    args = Args()
-    args.n = 1000
-    ticks = 6
-    tick_range = range(ticks + 1)
-    dispersion_range = [i / ticks for i in tick_range]
-    args.num_runs = 100
-    args.borda = True
-    args.grid = True
+def run_asym(args):
+    tick_range = range(args.ticks + 1)
+    dispersion_range = [i / args.ticks for i in tick_range]
     path = "results/asymmetry/borda/"
     if not args.grid:
         args.noisy_side = "reviewers"
-        assert(noisy_side.lower() in {"suitors", "reviewers"})
+        assert(args.noisy_side.lower() in {"suitors", "reviewers"})
         path = os.path.join(path, args.noisy_side)
         args.noiseless_phi = 0.75
 
@@ -121,7 +119,7 @@ if __name__ == "__main__":
         json.dump(dictionary, outfile, indent=4, sort_keys=True, default=lambda x: x.__name__)
 
     if args.grid:
-        prop_stats, borda_stats_sui, borda_stats_rev = mallows_DA_grid(args.n, args.num_runs, dispersion_range)
+        prop_stats, borda_stats_sui, borda_stats_rev, se_cost_dict = mallows_DA_grid(args.n, args.num_runs, dispersion_range)
     else:
         stats, borda_stats_sui, borda_stats_rev = asymmetry_prop_borda(args.n, args.num_runs, dispersion_range, args.noiseless_phi, noisy_side=args.noisy_side, borda=args.borda)
 
@@ -132,11 +130,32 @@ if __name__ == "__main__":
 
     if args.grid:
         prop_min_max = (args.n, pow(args.n, 2) - (args.n - 1))
-        graph_grid(prop_stats, "Number of proposals", os.path.join(path, "proposition_matrix"), prop_min_max, "phi_women", "phi_men")
-        graph_grid(borda_stats_sui, "Mean Borda for men", os.path.join(path, "men_borda_matrix"), None, "phi_women", "phi_men")
-        graph_grid(borda_stats_rev, "Mean Borda for women", os.path.join(path, "women_borda_matrix"), None, "phi_women", "phi_men")
+        graph_grid(prop_stats, "Number of proposals", os.path.join(path, "proposition_matrix"), prop_min_max, "phi_men", "phi_women")
+        graph_grid(borda_stats_sui, "Mean Borda for men", os.path.join(path, "men_borda_matrix"), None, "phi_men", "phi_women")
+        graph_grid(borda_stats_rev, "Mean Borda for women", os.path.join(path, "women_borda_matrix"), None, "phi_men", "phi_women")
+        #4th grid: sex equality cost
+        graph_grid(se_cost_dict, "Sex-equality cost by spread values", os.path.join(path, "se_costs"), None, "phi_men", "phi_women")
     else:
         if not args.borda:
             graph_mean_stdev(stats, file_name, file_path, "phi", "E[T_n]")
         else:
             graph_mean_stdev_multiple([borda_stats_sui, borda_stats_rev], file_name + "_borda_scores", file_path, "phi", "Mean of Borda scores", ["suitors borda", 'reviewers borda'])
+
+
+def build_parser():
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--n', type=int, default=15, required=True)
+    parser.add_argument('--num_runs', type=int, default=1000, required=True)
+    parser.add_argument('--borda', type=bool, default=True, required=True)
+    parser.add_argument('--grid', type=bool, default=True, required=True)
+    parser.add_argument('--ticks', type=int, default=10)
+    
+    return parser
+
+
+if __name__ == "__main__":
+    parser = build_parser()
+    args = parser.parse_args()
+    run_asym(args)
