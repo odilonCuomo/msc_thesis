@@ -19,14 +19,14 @@ def graph_grid(grid_stats, title, save_path, min_max, x_label, y_label):
     x.sort()
     y.sort()
     nb_cells = len(x)
-    xy_vals = [[grid_stats[(i, j)] for j in y] for i in x]
+    xy_vals = np.array([[grid_stats[(i, j)] for j in y] for i in x]).transpose()
     fig, ax = plt.subplots()
     fig.set_size_inches(15, 10)
     if min_max is not None: 
         min_val, max_val = min_max
-        mat = ax.matshow(xy_vals, cmap=plt.cm.Blues, vmin=min_val, vmax=max_val)
+        mat = ax.matshow(xy_vals, cmap=plt.cm.Blues, vmin=min_val, vmax=max_val, origin="lower")
     else:
-        mat = ax.matshow(xy_vals, cmap=plt.cm.Blues)
+        mat = ax.matshow(xy_vals, cmap=plt.cm.Blues, origin="lower")
 
     for i in range(nb_cells):
         for j in range(nb_cells):
