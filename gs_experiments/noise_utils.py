@@ -17,6 +17,21 @@ def add_noise_profile(profile, overlap=0, window_length=3, permute_prob=1.):
                 noisy_profile[k] = pref_list
     return noisy_profile
 
+def add_noise(players, overlap=0, window_length=3, permute_prob=1., window_start_min=0, noise_type="RANDOM"):
+    if noise_type == "LOCAL":
+        return add_noise_slide(players, overlap, window_length, permute_prob, window_start_min)
+    elif noise_type == "RANDOM":
+        return add_random_permute_noise(players, window_start_min)
+    else:
+        assert(False)
+
+def add_random_permute_noise(players, window_start_min):
+    pref_length = len(players[0].prefs)
+    noisy_players = copy.deepcopy(players)
+    for p in noisy_players:
+        utility.permute_window_player(p, window_start_min, pref_length - 1)
+    return noisy_players
+
 def add_noise_slide(players, overlap=0, window_length=3, permute_prob=1., window_start_min=0):
     """
     creates a new list of players with noise added to the preferences of the input list
@@ -40,11 +55,11 @@ def add_noise_slide(players, overlap=0, window_length=3, permute_prob=1., window
     noisy_players = copy.deepcopy(players)
     for p in noisy_players:
         #define the window:
-        for start in range(window_start_min, pref_length - window_length + 1, window_length - overlap):
+        for start in range(window_start_min, pref_length - 1, window_length - overlap):
             #determine if we swap or not
             if random.uniform(0, 1) < permute_prob:
                 #permute the given window
-                utility.permute_window_player(p, start, start + window_length)
+                utility.permute_window_player(p, start, start + window_length - 1)
     return noisy_players
 
 def get_original_borda(noisy_players, original_players):

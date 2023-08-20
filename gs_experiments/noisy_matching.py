@@ -51,15 +51,15 @@ def noise_comparison(args, base_phi_sui, base_phi_rev):
 
     #add noise
     if args.noisy_side == "suitors":
-        noisy_suitors = noise_utils.add_noise_slide(suitors, 0, 3, 1, window_start_min=0)
+        noisy_suitors = noise_utils.add_noise(suitors, 0, args.window_size, 1, window_start_min=0, args.noise_type)
         noisy_reviewers = copy.deepcopy(reviewers)
     elif args.noisy_side == "reviewers":
         noisy_suitors = copy.deepcopy(suitors)
         #start at 1 given theorem 5 in Ms Machiavelli paper (not first choice in pref list => strictly dominated)
-        noisy_reviewers = noise_utils.add_noise_slide(reviewers, 0, 3, 1, window_start_min=1)
+        noisy_reviewers = noise_utils.add_noise(reviewers, 0, args.window_size, 1, window_start_min=1, noise_type=args.noise_type)
     else: #add noise to both
-        noisy_suitors = noise_utils.add_noise_slide(suitors, 0, 3, 1, window_start_min=0)
-        noisy_reviewers = noise_utils.add_noise_slide(reviewers, 0, 3, 1, window_start_min=1)
+        noisy_suitors = noise_utils.add_noise(suitors, 0, args.window_size, 1, window_start_min=0, noise_type=args.noise_type)
+        noisy_reviewers = noise_utils.add_noise(reviewers, 0, args.window_size, 1, window_start_min=1, noise_type=args.noise_type)
 
     #run GS on initial profiles
     _, init_borda_sui, init_borda_rev = gs_utils.run_gs(suitors, reviewers, rev_dict)
@@ -172,6 +172,7 @@ def build_parser():
     parser.add_argument('--num_runs', type=int, default=1000, required=True)
     parser.add_argument('--ticks', type=int, default=10)
     parser.add_argument('--noise_type', type=str, default="LOCAL", required=True, choices=[n.name for n in Noise_Type])
+    parser.add_argument('--window_size', type=int)
     
     return parser
 
