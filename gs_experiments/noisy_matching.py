@@ -51,7 +51,7 @@ def noise_comparison(args, base_phi_sui, base_phi_rev):
 
     #add noise
     if args.noisy_side == "suitors":
-        noisy_suitors = noise_utils.add_noise(suitors, 0, args.window_size, 1, window_start_min=0, args.noise_type)
+        noisy_suitors = noise_utils.add_noise(suitors, 0, args.window_size, 1, window_start_min=0, noise_type=args.noise_type)
         noisy_reviewers = copy.deepcopy(reviewers)
     elif args.noisy_side == "reviewers":
         noisy_suitors = copy.deepcopy(suitors)
