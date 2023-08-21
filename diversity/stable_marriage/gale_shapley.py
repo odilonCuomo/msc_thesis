@@ -44,26 +44,33 @@ def gale_shapley(suitors, reviewers, rev_id_to_idx):
 
         suitor = free_suitors[-1]
         rev_id = suitor.get_next_favourite()
-        reviewer = reviewers[rev_id_to_idx[rev_id]]
-
-        if reviewer.matching:
-            current_match = reviewer.matching
-            ditched = reviewer.prefers(suitor.id, current_match.id)
-            if ditched:
-                _unmatch_pair(current_match, reviewer)
-                free_suitors.pop() #remove the current suitor from the list of free ones
-                free_suitors.append(current_match)
-                _match_pair(suitor, reviewer)
-                nb_ditches += 1
-                #print("reviewer " + str(reviewer.id) + " ditched suitor " + str(current_match.id) + " for suitor " + str(suitor.id))
-            else: # keep existing match
-                nb_rebuttals += 1
-                #print("suitor " + str(suitor.id) + " got rebutted by reviewer " + str(reviewer.id))
-        else:
-            #just match them up
-            _match_pair(suitor, reviewer) 
+        if rev_id is None:
             free_suitors.pop()
-            nb_successful += 1
-            #print("suitor " + str(suitor.id) + " matched with reviewer " + str(reviewer.id))
+        else:
+            reviewer = reviewers[rev_id_to_idx[rev_id]]
+
+            if reviewer.matching:
+                current_match = reviewer.matching
+                ditched = reviewer.prefers(suitor.id, current_match.id)
+                if ditched:
+                    _unmatch_pair(current_match, reviewer)
+                    free_suitors.pop() #remove the current suitor from the list of free ones
+                    free_suitors.append(current_match)
+                    _match_pair(suitor, reviewer)
+                    nb_ditches += 1
+                    #print("reviewer " + str(reviewer.id) + " ditched suitor " + str(current_match.id) + " for suitor " + str(suitor.id))
+                else: # keep existing match
+                    nb_rebuttals += 1
+                    #print("suitor " + str(suitor.id) + " got rebutted by reviewer " + str(reviewer.id))
+            else:
+                #match them up only if the suitor as acceptable
+                if suitor.id in reviewer.prefs:
+                    #just match them up
+                    _match_pair(suitor, reviewer) 
+                    free_suitors.pop()
+                    nb_successful += 1
+                else:
+                    #don't match them up, suitor asks next one on his list
+                    nb_rebuttals += 1
 
     return {s: s.matching for s in suitors}, (nb_ditches, nb_rebuttals, nb_successful)

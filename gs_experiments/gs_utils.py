@@ -11,7 +11,7 @@ def create_mallows_profile(n, phi, ref):
     """Creates a Mallows preference profile"""
     profile = []
     for i in range(n):
-        prefs = mallows.Mallows_Proposal_Sampler(n, phi, ref)
+        prefs = mallows.Mallows_Proposal_Sampler(phi, ref)
         profile.append(prefs)
     return profile
 
@@ -23,7 +23,7 @@ def create_asymmetric_mallows_profile(n1, n2, phi, ref):
     """
     profile = []
     for i in range(n1):
-        prefs = mallows.Mallows_Proposal_Sampler(n2, phi, ref)
+        prefs = mallows.Mallows_Proposal_Sampler(phi, ref)
         profile.append(prefs)
     return profile
 

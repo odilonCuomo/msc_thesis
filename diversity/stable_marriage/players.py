@@ -68,7 +68,13 @@ class Player():
         player."""
 
         prefs = self.prefs
-        return prefs.index(player_id) < prefs.index(other_id)
+        if player_id not in prefs:
+            return False
+        else:
+            if other_id in prefs:
+                return prefs.index(player_id) < prefs.index(other_id)
+            else:
+                return True
     
     def get_borda(self):
         """Returns this players Borda utility (Borda count)
