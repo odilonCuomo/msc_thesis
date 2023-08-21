@@ -78,8 +78,11 @@ class Player():
     
     def get_borda(self):
         """Returns this players Borda utility (Borda count)
-        Requires this player to be already matched up."""
-        return len(self.prefs) - self.prefs.index(self.matching.id) - 1
+        If the player is unmatched, returns 0."""
+        if self.matching is None:
+            return 0
+        else:
+            return len(self.prefs) - self.prefs.index(self.matching.id) - 1
     
     def get_rank_of(self, player_id):
         """Returns the rank of the given player id in this player's preference list."""

@@ -2,7 +2,8 @@ import numpy as np
 # utils to sample from mallows
 
 
-def Mallows_Proposal_Sampler(nb_alternatives, phi, reference):
+def Mallows_Proposal_Sampler(phi, reference):
+    nb_alternatives = len(reference)
     ordering = []
     alternatives_left = list(int(a) for a in reference)
     basic_distro = [pow(phi, i) for i in range(nb_alternatives)]
@@ -34,7 +35,7 @@ def Mallows_Profile(nb_alternatives, nb_agents, phi, reference):
     profile = dict()
     for agent in range(nb_agents):
         #create ordering
-        ordering = Mallows_Proposal_Sampler(nb_alternatives, phi, reference)
+        ordering = Mallows_Proposal_Sampler(phi, reference)
         #add to ordering dictionary
         profile[ordering] = profile.get(ordering, 0) + 1
 
