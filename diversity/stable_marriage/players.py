@@ -82,7 +82,7 @@ class Player():
         if self.matching is None:
             return 0
         else:
-            return len(self.prefs) - self.prefs.index(self.matching.id) - 1
+            return len(self.prefs) - self.prefs.index(self.matching.id)
     
     def get_rank_of(self, player_id):
         """Returns the rank of the given player id in this player's preference list."""
