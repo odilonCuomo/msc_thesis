@@ -1,0 +1,8 @@
+{
+    "borda": true,
+    "commit_id": "dcc4eeca25f0bdbe44374337de0b960a4449b5f9",
+    "grid": true,
+    "n": 50,
+    "num_runs": 1000,
+    "ticks": 10
+}

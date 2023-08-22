@@ -1,0 +1,10 @@
+{
+    "commit_id": "b25e736f86d6fd7f206ea62a2b5cf6f67c6fd0b3",
+    "metric": "GRID_MEAN",
+    "n": 15,
+    "noise_type": "RANDOM",
+    "noisy_side": "reviewers",
+    "num_runs": 1000,
+    "ticks": 10,
+    "window_size": 2
+}

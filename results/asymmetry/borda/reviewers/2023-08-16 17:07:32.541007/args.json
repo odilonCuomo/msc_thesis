@@ -1,0 +1,8 @@
+{
+    "borda": true,
+    "commit_id": "d9e0243a082a1491a6fecbd02b68cd70cd7a418d",
+    "n": 500,
+    "noiseless_phi": 0.75,
+    "noisy_side": "reviewers",
+    "num_runs": 150
+}
