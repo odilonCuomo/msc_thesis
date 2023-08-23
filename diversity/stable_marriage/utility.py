@@ -1,10 +1,10 @@
 import statistics, random
 
-def borda_vals(players):
+def borda_vals(players, premium=1):
     """get a list of each player's Borda utility"""
     us = []
     for p in players:
-        us.append(p.get_borda())
+        us.append(p.get_borda(premium))
     return us
 
 def borda_stats(players):

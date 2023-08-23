@@ -74,3 +74,18 @@ def get_original_borda(noisy_players, original_players):
             rank_of_noisy_match = init_p.get_rank_of(p.matching.id)
             true_borda.append(n - rank_of_noisy_match)
     return true_borda
+
+def get_original_borda_premium(noisy_players, original_players, premium):
+    #same as above, but adds the matched premium
+    #unmatched gets Borda = 0
+    #matched gets Borda = borda_score + premium
+    true_borda = []
+    n = len(noisy_players[0].prefs) #length of pref list
+    for i, p in enumerate(noisy_players):
+        if p.matching is None:
+            true_borda.append(0) #assumes original player preference list defined same set of unacceptable agents
+        else:
+            init_p = original_players[i]
+            rank_of_noisy_match = init_p.get_rank_of(p.matching.id)
+            true_borda.append(n - rank_of_noisy_match + premium)
+    return true_borda

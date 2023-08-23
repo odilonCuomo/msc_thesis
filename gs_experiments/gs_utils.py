@@ -7,6 +7,12 @@ def run_gs(suitors, reviewers, rev_id_to_idx):
 
     return props, borda_vals(suitors), borda_vals(reviewers)
 
+def run_gs_premium(suitors, reviewers, rev_id_to_idx, premium):
+    """Run the GS algorithm using the given players lists."""
+    _, props = gale_shapley(suitors.copy(), reviewers.copy(), rev_id_to_idx)
+
+    return props, borda_vals(suitors, premium), borda_vals(reviewers, premium)
+
 def create_mallows_profile(n, phi, ref):
     """Creates a Mallows preference profile"""
     profile = []

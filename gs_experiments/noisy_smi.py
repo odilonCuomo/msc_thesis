@@ -40,8 +40,8 @@ def noise_comparison(args, base_phi_sui, base_phi_rev):
     ref_rev = tuple(sorted([i for i in range(args.n)], key=lambda k: random.random()))
     suitors = gs_utils.create_mallows_players(args.n, phi=base_phi_sui, ref=ref_sui)
     reviewers = gs_utils.create_mallows_players(args.n, phi=base_phi_rev, ref=ref_rev)
-    truncate_prefs(suitors, args.prefs_bound)
-    truncate_prefs(reviewers, args.prefs_bound)
+    truncate_prefs(suitors, args.prefs_bound_sui)
+    truncate_prefs(reviewers, args.prefs_bound_rev)
     rev_dict = dict()
     for i, p in enumerate(reviewers):
         rev_dict[p.id] = i
@@ -59,16 +59,16 @@ def noise_comparison(args, base_phi_sui, base_phi_rev):
         noisy_reviewers = noise_utils.add_noise(reviewers, 0, args.window_size, 1, window_start_min=1, noise_type=args.noise_type)
 
     #run GS on initial profiles
-    _, init_borda_sui, init_borda_rev = gs_utils.run_gs(suitors, reviewers, rev_dict)
+    _, init_borda_sui, init_borda_rev = gs_utils.run_gs_premium(suitors, reviewers, rev_dict, args.matched_premium)
 
     #re run GS
-    _, noisy_borda_sui, noisy_borda_rev = gs_utils.run_gs(noisy_suitors, noisy_reviewers, rev_dict)
+    _ = gs_utils.run_gs(noisy_suitors, noisy_reviewers, rev_dict)
     
     #compute utility of both
     #we've already got the utility of the first run
     #we need the utility of the second matching w respect to the original profile
-    true_noisy_borda_sui = noise_utils.get_original_borda(noisy_suitors, suitors)
-    true_noisy_borda_rev = noise_utils.get_original_borda(noisy_reviewers, reviewers)
+    true_noisy_borda_sui = noise_utils.get_original_borda_premium(noisy_suitors, suitors, args.matched_premium)
+    true_noisy_borda_rev = noise_utils.get_original_borda_premium(noisy_reviewers, reviewers, args.matched_premium)
 
     #compute the number of unmatched men/women
     init_unmatched = count_unmatched(suitors)
@@ -84,6 +84,7 @@ def noise_run(args):
     path = "results/noise/"
     path = os.path.join(path, "incomplete")
     path = os.path.join(path, args.noisy_side)
+    path = os.path.join(path, args.noise_type)
 
     #create directory for this run
     path = os.path.join(path, str(datetime.now()))
@@ -174,12 +175,14 @@ def build_parser():
 
     parser.add_argument('--metric', type=str, required=True, choices=[m.name for m in Metric])
     parser.add_argument('--n', type=int, default=15, required=True)
-    parser.add_argument('--prefs_bound', type=int, default=10, required=True)
+    parser.add_argument('--prefs_bound_sui', type=int, default=10, required=True)
+    parser.add_argument('--prefs_bound_rev', type=int, default=10, required=True)
     parser.add_argument('--noisy_side', type=str, default="suitors", required=True)
     parser.add_argument('--num_runs', type=int, default=1000, required=True)
     parser.add_argument('--ticks', type=int, default=10)
     parser.add_argument('--noise_type', type=str, default="LOCAL", required=True, choices=[n.name for n in Noise_Type])
     parser.add_argument('--window_size', type=int)
+    parser.add_argument('--matched_premium', type=int, default=0, required=True)
     
     return parser
 

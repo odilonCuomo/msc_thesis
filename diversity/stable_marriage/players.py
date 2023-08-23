@@ -76,13 +76,13 @@ class Player():
             else:
                 return True
     
-    def get_borda(self):
+    def get_borda(self, premium=1):
         """Returns this players Borda utility (Borda count)
         If the player is unmatched, returns 0."""
         if self.matching is None:
             return 0
         else:
-            return len(self.prefs) - self.prefs.index(self.matching.id)
+            return len(self.prefs) - self.prefs.index(self.matching.id) + premium
     
     def get_rank_of(self, player_id):
         """Returns the rank of the given player id in this player's preference list."""
