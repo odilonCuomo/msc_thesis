@@ -83,7 +83,7 @@ def mallows_DA_grid(n, nb_runs, dispersion_range, mode="mean"):
                 nb_props.append(sum(props))
                 b_sui.append(mean_borda_suitors)
                 b_rev.append(mean_borda_reviewers)
-                se_costs.append(abs(mean_borda_suitors - mean_borda_reviewers))
+                se_costs.append(mean_borda_suitors - mean_borda_reviewers)
             stats[(phi_sui, phi_rev)] = mean(nb_props) if mode == "mean" else stdev(nb_props)
             borda_stats_sui[(phi_sui, phi_rev)] = mean(b_sui) if mode == "mean" else stdev(b_sui)
             borda_stats_rev[(phi_sui, phi_rev)] = mean(b_rev) if mode == "mean" else stdev(b_rev)
