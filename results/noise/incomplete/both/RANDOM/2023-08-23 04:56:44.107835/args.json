@@ -1,0 +1,12 @@
+{
+    "commit_id": "4c4087af615cf772bacb1ff50f0a7852cca7c580",
+    "metric": "GRID_MEAN",
+    "n": 15,
+    "noise_type": "RANDOM",
+    "noisy_side": "both",
+    "num_runs": 1000,
+    "prefs_bound_rev": 15,
+    "prefs_bound_sui": 5,
+    "ticks": 10,
+    "window_size": 2
+}
