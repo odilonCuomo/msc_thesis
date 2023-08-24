@@ -1,0 +1,10 @@
+{
+    "commit_id": "40d4abe33b3eebd3d95b53c4a4efeda60b4310ee",
+    "metric": "STD_ONLY",
+    "n": 15,
+    "noise_type": "LOCAL",
+    "noisy_side": "both",
+    "num_runs": 1000,
+    "ticks": 10,
+    "window_size": 2
+}

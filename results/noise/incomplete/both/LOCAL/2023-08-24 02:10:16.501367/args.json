@@ -1,0 +1,13 @@
+{
+    "commit_id": "40d4abe33b3eebd3d95b53c4a4efeda60b4310ee",
+    "matched_premium": 15,
+    "metric": "GRID_MEAN",
+    "n": 15,
+    "noise_type": "LOCAL",
+    "noisy_side": "both",
+    "num_runs": 1000,
+    "prefs_bound_rev": 5,
+    "prefs_bound_sui": 5,
+    "ticks": 10,
+    "window_size": 2
+}
