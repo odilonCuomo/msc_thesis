@@ -9,23 +9,9 @@ from enum import Enum
 import numpy as np
 from statistics import mean, stdev
 from datetime import datetime
+
 """
-Goal:
-
-investigate whether adding noise to preference profiles might help aggregated utility scores.
-
-Vision: profiles in practice follow (to confirm) mallows distributions. This is not ideal (more collisions).
-Assumptions: introducing per-agent noise might help alleviate this.
-
-Experiment design:
-- to initial Mallows-distributed profiles (maybe identity profiles), we will add 
-noise. The interpretation here is that one or both sides are given the original data + some minor
-modification about the other side.
-- we'll run GS on both the original profiles and the noisy ones.
-- we'll compute the utilities of the final matchings, USING THE INITIAL PROFILES (regarded as TRUE here)
-
-Metrics: getting higher aggregated utility in the noisy scenario is interpreted as a better solution.
-Independent variables: the spread in initial population
+Study of the effect of different preference bound lengths for both men and women
 """
 
 class Metric(Enum):
@@ -33,11 +19,23 @@ class Metric(Enum):
     MAX = 2
     CORRELATION = 3
     GRID_MEAN = 4
-    STD_ONLY = 5
 
 class Noise_Type(Enum):
     RANDOM = 1
     LOCAL = 2
+
+def truncate_prefs(players, bound):
+    for p in players:
+        prefs = p.prefs
+        prefs = prefs[: bound]
+        p.prefs = prefs
+
+def count_unmatched(players):
+    unmatched = 0
+    for p in players:
+        if p.matching is None:
+            unmatched += 1
+    return unmatched
 
 def noise_comparison(args, base_phi_sui, base_phi_rev):
     assert(args.noisy_side in {"suitors", "reviewers", "both"})
@@ -46,6 +44,8 @@ def noise_comparison(args, base_phi_sui, base_phi_rev):
     ref_rev = tuple(sorted([i for i in range(args.n)], key=lambda k: random.random()))
     suitors = gs_utils.create_mallows_players(args.n, phi=base_phi_sui, ref=ref_sui)
     reviewers = gs_utils.create_mallows_players(args.n, phi=base_phi_rev, ref=ref_rev)
+    truncate_prefs(suitors, args.prefs_bound_sui)
+    truncate_prefs(reviewers, args.prefs_bound_rev)
     rev_dict = dict()
     for i, p in enumerate(reviewers):
         rev_dict[p.id] = i
@@ -63,18 +63,22 @@ def noise_comparison(args, base_phi_sui, base_phi_rev):
         noisy_reviewers = noise_utils.add_noise(reviewers, 0, args.window_size, 1, window_start_min=1, noise_type=args.noise_type)
 
     #run GS on initial profiles
-    _, init_borda_sui, init_borda_rev = gs_utils.run_gs(suitors, reviewers, rev_dict)
+    _, init_borda_sui, init_borda_rev = gs_utils.run_gs_premium(suitors, reviewers, rev_dict, args.matched_premium)
 
     #re run GS
-    _, noisy_borda_sui, noisy_borda_rev = gs_utils.run_gs(noisy_suitors, noisy_reviewers, rev_dict)
+    _ = gs_utils.run_gs(noisy_suitors, noisy_reviewers, rev_dict)
     
     #compute utility of both
     #we've already got the utility of the first run
     #we need the utility of the second matching w respect to the original profile
-    true_noisy_borda_sui = noise_utils.get_original_borda(noisy_suitors, suitors)
-    true_noisy_borda_rev = noise_utils.get_original_borda(noisy_reviewers, reviewers)
+    true_noisy_borda_sui = noise_utils.get_original_borda_premium(noisy_suitors, suitors, args.matched_premium)
+    true_noisy_borda_rev = noise_utils.get_original_borda_premium(noisy_reviewers, reviewers, args.matched_premium)
 
-    return init_borda_sui, init_borda_rev, true_noisy_borda_sui, true_noisy_borda_rev
+    #compute the number of unmatched men/women
+    init_unmatched = count_unmatched(suitors)
+    noisy_unmatched = count_unmatched(noisy_suitors)
+
+    return init_borda_sui, init_borda_rev, true_noisy_borda_sui, true_noisy_borda_rev, init_unmatched, noisy_unmatched
 
 def noise_run(args):
     assert(args.metric.upper() in [m.name for m in Metric])
@@ -82,34 +86,21 @@ def noise_run(args):
     tick_range = range(args.ticks + 1)
     phis = [i / args.ticks for i in tick_range]
     path = "results/noise/"
-    path = os.path.join(path, args.metric.lower())
+    path = os.path.join(path, "incomplete")
+    path = os.path.join(path, "bound_study")
     path = os.path.join(path, args.noisy_side)
+    path = os.path.join(path, args.noise_type)
 
     #create directory for this run
-    path = os.path.join(path, str(datetime.now()))
-    os.makedirs(path)
-
-    #record arguments in directory as .json
-    repo = git.Repo(search_parent_directories=True)
-    sha = repo.head.object.hexsha
-    dictionary = {"commit_id" : sha}
-    for key in vars(args):
-        dictionary[str(key)] = getattr(args, key)
-
-    with open(os.path.join(path, "args.json"), "w") as outfile:
-        json.dump(dictionary, outfile, indent=4, sort_keys=True, default=lambda x: x.__name__)
-
-    file_name = get_path_name(args)
-    file_path = os.path.join(path, file_name)
+    path = os.path.join(path, args.run_dir)
 
     #run
     correlation_dict = dict()
     mean_dict_sui = dict()
     mean_dict_rev = dict()
     mean_dict_sum = dict()
-    std_only_dict_sui = dict()
-    std_only_dict_rev = dict()
     sex_eq_cost_dict = dict() #measures difference in SE cost init -> noisy
+    unmatched_diff_dict = dict()
     for phi_sui in phis:
         temp_correlation_dict = dict()
         phi_to_diffs_sui = dict()
@@ -118,8 +109,9 @@ def noise_run(args):
             mean_borda_diff_sui = []
             mean_borda_diff_rev = []
             se_costs = []
+            unmatched_diffs = []
             for _ in range(args.num_runs):
-                init_sui, init_rev, noisy_sui, noisy_rev = noise_comparison(args, phi_sui, phi_rev)
+                init_sui, init_rev, noisy_sui, noisy_rev, init_unmatched, noisy_unmatched = noise_comparison(args, phi_sui, phi_rev)
                 mean_init_sui, mean_init_rev = mean(init_sui), mean(init_rev)
                 mean_noisy_sui, mean_noisy_rev = mean(noisy_sui), mean(noisy_rev)
                 mean_borda_diff_sui.append(mean_noisy_sui - mean_init_sui)
@@ -127,6 +119,7 @@ def noise_run(args):
                 noisy_equality_cost = abs(mean_noisy_sui - mean_noisy_rev)
                 init_equality_cost = abs(mean_init_sui - mean_init_rev)
                 se_costs.append(noisy_equality_cost - init_equality_cost)
+                unmatched_diffs.append((noisy_unmatched - init_unmatched) * 2)
 
 
             #plot results
@@ -140,35 +133,29 @@ def noise_run(args):
                 corr_coef = np.corrcoef(mean_borda_diff_sui, mean_borda_diff_rev)
                 correlation_dict[(phi_sui, phi_rev)] = corr_coef[0][1] #get correct element from Pearson correlation matrix
                 temp_correlation_dict[phi_rev] = corr_coef[0][1]
-            elif args.metric == Metric.STD_ONLY.name:
-                std_only_dict_sui[(phi_sui, phi_rev)] = stdev(mean_borda_diff_sui)
-                std_only_dict_rev[(phi_sui, phi_rev)] = stdev(mean_borda_diff_rev)
             else: #grid mean
                 mean_sui, mean_rev = mean(mean_borda_diff_sui), mean(mean_borda_diff_rev)
                 mean_dict_sui[(phi_sui, phi_rev)] = mean_sui
                 mean_dict_rev[(phi_sui, phi_rev)] = mean_rev
                 mean_dict_sum[(phi_sui, phi_rev)] = mean_sui + mean_rev
                 sex_eq_cost_dict[(phi_sui, phi_rev)] = mean(se_costs)
-        temp_file_name = file_name + "_phi_sui_" + str(phi_sui)
-        temp_file_path = file_path + "_phi_sui_" + str(phi_sui)
-        if args.metric == Metric.STD.name:
-            graph_mean_stdev_multiple([phi_to_diffs_sui, phi_to_diffs_rev], temp_file_name, temp_file_path, "phi rev", "Mean of Borda score diff", ["suitors", 'reviewers'])
-        elif args.metric == Metric.MAX.name:
-            graph_min_max_multiple([phi_to_diffs_sui, phi_to_diffs_rev], temp_file_name, temp_file_path, "phi rev", "Mean of Borda score diff", ["suitors", 'reviewers'])
-    #if we're recording correlation, plot a grid of the correlations for each (phi_sui, phi_rev) pair
-    if args.metric == Metric.CORRELATION.name:
-        graph_grid(correlation_dict, "Correlation between suitor and reviewer differences in utility", os.path.join(path, "correlation_matrix"), (-1, 1), "phi_sui", "phi_rev")
-    elif args.metric == Metric.GRID_MEAN.name:
-        graph_grid(mean_dict_sui, "Mean of differences in suitor Borda scores", os.path.join(path, "mean_matrix_suitors"), None, "phi_sui", "phi_rev")
-        graph_grid(mean_dict_rev, "Mean of differences in reviewer Borda scores", os.path.join(path, "mean_matrix_reviewers"), None, "phi_sui", "phi_rev")
-        #3rd grid: sum of both sides' borda
-        graph_grid(mean_dict_sum, "Mean of differences in all agents' Borda scores", os.path.join(path, "mean_matrix_sum_both"), None, "phi_sui", "phi_rev")
-        #4th grid: SE cost difference
-        graph_grid(sex_eq_cost_dict, "Difference in sex-equality cost", os.path.join(path, "mean_matrix_se_cost"), None, "phi_sui", "phi_rev")
-    elif args.metric == Metric.STD_ONLY.name:
-        graph_grid(std_only_dict_sui, "", os.path.join(path, "std_sui_matrix"), None, "phi_sui", "phi_rev")
-        graph_grid(std_only_dict_rev, "", os.path.join(path, "std_rev_matrix"), None, "phi_sui", "phi_rev")
-            
+                unmatched_diff_dict[(phi_sui, phi_rev)] = mean(unmatched_diffs)
+
+    grid_stats = unmatched_diff_dict
+    #write to csv the grid values
+    header = ["phi_men, phi_women", "diff_unmatched"]
+    data = [[disp, v] for (disp, v) in list(grid_stats.items())]
+
+    tag = "b_sui_" + str(args.prefs_bound_sui) + "_b_rev_" + str(args.prefs_bound_rev)
+    csv_path = os.path.join(path, tag)
+    with open(csv_path + '.csv', 'w', encoding='UTF8', newline='') as f:
+        writer = csv.writer(f)
+
+        # write the header
+        writer.writerow(header)
+
+        # write multiple rows
+        writer.writerows(data)
 
 def build_parser():
 
@@ -177,10 +164,14 @@ def build_parser():
     parser.add_argument('--metric', type=str, required=True, choices=[m.name for m in Metric])
     parser.add_argument('--n', type=int, default=15, required=True)
     parser.add_argument('--noisy_side', type=str, default="suitors", required=True)
+    parser.add_argument('--prefs_bound_sui', type=int, default=10, required=True)
+    parser.add_argument('--prefs_bound_rev', type=int, default=10, required=True)
     parser.add_argument('--num_runs', type=int, default=1000, required=True)
     parser.add_argument('--ticks', type=int, default=10)
     parser.add_argument('--noise_type', type=str, default="LOCAL", required=True, choices=[n.name for n in Noise_Type])
     parser.add_argument('--window_size', type=int)
+    parser.add_argument('--matched_premium', type=int, default=0, required=True)
+    parser.add_argument('--run_dir', type=str, default=0, required=True)
     
     return parser
 
