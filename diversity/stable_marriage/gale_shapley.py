@@ -63,7 +63,7 @@ def gale_shapley(suitors, reviewers, rev_id_to_idx):
                     nb_rebuttals += 1
                     #print("suitor " + str(suitor.id) + " got rebutted by reviewer " + str(reviewer.id))
             else:
-                #match them up only if the suitor as acceptable
+                #match them up only if the suitor is acceptable
                 if suitor.id in reviewer.prefs:
                     #just match them up
                     _match_pair(suitor, reviewer) 
